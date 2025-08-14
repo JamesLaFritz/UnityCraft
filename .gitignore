@@ -1,3 +1,16 @@
+# helps prevent accidentally committing non‑owned or paid Unity Asset Store content.
+# Keep only files you created in Assets/UnityCraft/ under version control.
+
+# Ignore all of Assets by default
+/Assets/*
+
+# Keep ONLY the UnityCraft folder and its contents
+!/Assets/UnityCraft/
+!/Assets/UnityCraft/**
+
+# Ensure the folder meta is tracked (Unity needs it)
+!/Assets/UnityCraft.meta
+
 # This .gitignore file should be placed at the root of your Unity project directory
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
