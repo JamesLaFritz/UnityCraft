@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: f95ea742742a42aa8588509f9df28544, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: jameslafritz.coreframework.Editor:CoreFramework.Settings:VersionProjectSettings
+  m_EditorClassIdentifier: jameslafritz.coreframework.Editor::CoreFramework.Settings.VersionProjectSettings
   _major: 0
   _minor: 1
   _build: 0
