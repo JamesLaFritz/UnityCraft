@@ -44,7 +44,7 @@ namespace UnityCraft
         [Tooltip("Minimum Y (inclusive) to start building from. Default: -64")]
         [SerializeField] private int _minHeight = -64;
 
-        // <summary>
+        /// <summary>
         /// Y (inclusive) to start using the SubsurfaceBlock block.
         /// Default: -62
         /// </summary>
@@ -110,6 +110,9 @@ namespace UnityCraft
                 parent.SetParent(transform, false);
                 _blocksParent = parent;
             }
+            
+            // Uncomment to use Unity's built-in random number generator.
+            //UnityEngine.Random.InitState((int)_seed);
 
             // For Milestone 1 we generate immediately on play.
             GenerateWorld();
@@ -167,8 +170,21 @@ namespace UnityCraft
             for (var x = -_buildSize.x; x <= _buildSize.x; x++)
             {
                 // --- Surface Height from 2D Noise ---
-                // Using Squirrel Perlin noise (deterministic with seed).
+
+                #region Unity's built-in random number generator.
+
+                // Uncomment if you want to use Unity's built-in random number generator.
+                //var n = Mathf.PerlinNoise(x * _noiseFrequency, z * _noiseFrequency);
+                
+                #endregion
+
+                #region SquirrelNoise32Bit
+
+                // Using Squirrel Perlin noise (deterministic with seed). Comment if you want to use Unity's built-in random number generator.
                 var n = SquirrelNoise32Bit.Perlin(x * _noiseFrequency, z * _noiseFrequency, _seed);
+                //var n = SquirrelNoise32Bit.Get2DNoise((int)(x * _noiseFrequency), (int)(z * _noiseFrequency), _seed);
+
+                #endregion
 
                 var surfaceY = (int)(yMin + math.round(n * heightRange));
                 // Clamp surface to be at least bottom-layer height (prevents tiny columns dipping below the bottom fill band)
@@ -246,7 +262,7 @@ namespace UnityCraft
             _buildSize.y = Mathf.Max(1, _buildSize.y);
             _buildSize.z = Mathf.Max(1, _buildSize.z);
 
-            // Keep bottom layer within [MinHeight .. MaxHeight]
+            // Keep the bottom layer within [MinHeight, MaxHeight]
             var maxHeight = MaxHeight;
             if (_bottomLayerHeight < _minHeight) _bottomLayerHeight = _minHeight + 1;
             if (_bottomLayerHeight > maxHeight)  _bottomLayerHeight = maxHeight;
