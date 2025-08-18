@@ -5,6 +5,7 @@
 //              Kept intentionally small for Milestone 1. We'll expand as needed in later milestones.
 #endregion
 
+using Unity.Burst;
 using UnityEngine;
 
 namespace UnityCraft
@@ -15,6 +16,7 @@ namespace UnityCraft
     /// Future milestones may extend this with materials, health, sounds, mining level, etc.
     /// </summary>
     [System.Serializable]
+    [BurstCompile]
     public struct BlockData
     {
         #region Fields
