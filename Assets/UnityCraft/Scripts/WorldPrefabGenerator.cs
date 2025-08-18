@@ -19,80 +19,29 @@ namespace UnityCraft
         #region Fields
 
         /// <summary>
-        /// Seed for deterministic height noise. Changing this changes the terrain layout.
+        /// Represents the configuration data used by the world generation system in UnityCraft.
+        /// The variable holds an instance of the <see cref="WorldData"/> struct, which includes
+        /// properties for defining the size, seed, noise parameters, and block data for procedural
+        /// generation of a voxel-based world.
         /// </summary>
-        [Tooltip("Seed for deterministic height noise. Changing this changes the terrain layout.")]
-        [SerializeField] private uint _seed = 12345;
+        /// <remarks>
+        /// This data structure is serialized to allow modification directly in the Unity Editor. It
+        /// contains essential parameters required to customize and generate a terrain grid using
+        /// Perlin noise and other procedural techniques.
+        /// </remarks>
+        [SerializeField] private WorldData _worldData;
 
         /// <summary>
-        /// Size of the world to build. 
-        /// X = half-width in blocks (world spans -X..X),
-        /// Y = vertical span above MinHeight (so MaxHeight = MinHeight + Y),
-        /// Z = half-length in blocks (world spans -Z..Z).
-        /// ⚠ Too large will drop FPS. (~60FPS at 10x10x10, ~8FPS at 30x40x30).
+        /// Serves as the parent transform for all instantiated block objects in the voxel terrain.
+        /// This transform organizes and contains block prefabs, ensuring the hierarchy remains
+        /// clean and manageable within the Unity Editor during runtime and development.
         /// </summary>
-        [Tooltip("World size in blocks. X = half-width (world spans -X..X), " +
-                 "Y = vertical span above MinHeight (MaxHeight = MinHeight + Y), " +
-                 "Z = half-length (world spans -Z..Z).\n" +
-                 "⚠ Too large will drop FPS. (~60FPS at 10x10x10, ~8FPS at 30x40x30).")]
-        [SerializeField] private Vector3Int _buildSize = new Vector3Int(32, 380, 32);
-
-        /// <summary>
-        /// Minimum Y (inclusive) to start building from. Surface height will be >= this value.
-        /// Default: -10
-        /// </summary>
-        [Tooltip("Minimum Y (inclusive) to start building from. Default: -64")]
-        [SerializeField] private int _minHeight = -64;
-
-        /// <summary>
-        /// Y (inclusive) to start using the SubsurfaceBlock block.
-        /// Default: -62
-        /// </summary>
-        [Tooltip("Y (inclusive) to start using the SubsurfaceBlock block. Default: -62")]
-        [SerializeField] private int _bottomLayerHeight = -62;
-
-        /// <summary>
-        /// Noise frequency used for height sampling. Larger values = more frequent variation.
-        /// </summary>
-        [Tooltip("Perlin noise frequency for heightmap. Larger values = more frequent variation.")]
-        [Min(0.0001f)]
-        [SerializeField] private float _noiseFrequency = 0.05f;
-
-        /// <summary>
-        /// Surface block placed at the noise-determined surface height (e.g., Grass).
-        /// </summary>
-        [Header("Blocks")]
-        [Tooltip("Surface block placed at the top surface height.")]
-        [SerializeField] private BlockData _surfaceBlock;
-
-        /// <summary>
-        /// Subsurface block used to fill from BottomLayerHeight up to (surfaceHeight - 1), e.g., Dirt/Stone.
-        /// </summary>
-        [Tooltip("Block used to fill beneath the surface down to BottomLayerHeight (e.g., Dirt/Stone).")]
-        [SerializeField] private BlockData _subsurfaceBlock;
-
-        /// <summary>
-        /// Block used to fill from MinHeight to BottomLayerHeight (e.g., Stone).
-        /// </summary>
-        [Tooltip("Block used to fill from MinHeight to BottomLayerHeight (e.g., Stone).")]
-        [SerializeField] private BlockData _bottomSubsurfaceBlock;
-
-        /// <summary>
-        /// Parent container to keep the hierarchy tidy (created at runtime if missing).
-        /// </summary>
-        [Header("Hierarchy")]
-        [Tooltip("Optional parent transform for spawned blocks. Created at runtime if null.")]
+        /// <remarks>
+        /// If not set manually, this transform is automatically created as a child of the
+        /// current object when the generator script initializes. It is used for optimizing
+        /// cleanup and structural organization when blocks are generated or cleared.
+        /// </remarks>
         [SerializeField] private Transform _blocksParent;
-
-        #endregion
-
-        #region Properties
-
-        /// <summary>
-        /// Gets the maximum height (inclusive) we are allowed to build up to.
-        /// Calculated as MinHeight + BuildSize.y.
-        /// </summary>
-        private int MaxHeight => _minHeight + _buildSize.y;
 
         #endregion
 
@@ -125,17 +74,21 @@ namespace UnityCraft
         {
 #if UNITY_EDITOR
             Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.25f);
+            
+            var buildSize = _worldData.BuildSize;
+            var minHeight = _worldData.MinHeight;
+            var maxHeight = _worldData.MaxHeight;
 
             // With MaxHeight = MinHeight + BuildSize.y, the vertical size is simply BuildSize.y + 1 blocks.
             var size = new Vector3(
-                _buildSize.x * 2 + 1,
-                (MaxHeight - _minHeight) + 1,         // == _buildSize.y + 1
-                _buildSize.z * 2 + 1
+                buildSize.x * 2 + 1,
+                (maxHeight - minHeight) + 1,         // == _buildSize.y + 1
+                buildSize.z * 2 + 1
             );
 
             var center = new Vector3(
                 0f,
-                _minHeight + (size.y - 1) * 0.5f,
+                minHeight + (size.y - 1) * 0.5f,
                 0f
             );
 
@@ -153,21 +106,32 @@ namespace UnityCraft
         [ContextMenu("Generate World")]
         public void GenerateWorld()
         {
-            if (!_surfaceBlock.Prefab || !_subsurfaceBlock.Prefab || !_bottomSubsurfaceBlock.Prefab)
+            var blockCount = _worldData.Blocks.Length;
+            var surfaceBlock = _worldData.Blocks[1];
+            var subsurfaceBlock = blockCount < 3 ? _worldData.Blocks[^1] : _worldData.Blocks[2];
+            var bottomSubsurfaceBlock = _worldData.Blocks[^1];
+            if (!surfaceBlock.Prefab || !subsurfaceBlock.Prefab || !bottomSubsurfaceBlock.Prefab)
             {
                 Debug.LogWarning("[World] Missing block prefabs. Assign Surface/Subsurface/BottomSubsurface in the inspector.");
                 return;
             }
 
             ClearWorld();
+            
+            var buildSize = _worldData.BuildSize;
+            var minHeight = _worldData.MinHeight;
+            var bottomLayerHeight = _worldData.BottomLayerHeight;
+            var noiseFrequency = _worldData.NoiseFrequency;
+            var seed = _worldData.Seed;
+            var maxHeight = _worldData.MaxHeight;
 
             // Clamp ranges
-            var yMin = math.min(_minHeight, MaxHeight);
-            var yMax = math.max(_minHeight, MaxHeight);
+            var yMin = math.min(minHeight, maxHeight);
+            var yMax = math.max(minHeight, maxHeight);
             var heightRange = math.max(1, yMax - yMin); // exclusive mapping
 
-            for (var z = -_buildSize.z; z <= _buildSize.z; z++)
-            for (var x = -_buildSize.x; x <= _buildSize.x; x++)
+            for (var z = -buildSize.z; z <= buildSize.z; z++)
+            for (var x = -buildSize.x; x <= buildSize.x; x++)
             {
                 // --- Surface Height from 2D Noise ---
 
@@ -181,24 +145,24 @@ namespace UnityCraft
                 #region SquirrelNoise32Bit
 
                 // Using Squirrel Perlin noise (deterministic with seed). Comment if you want to use Unity's built-in random number generator.
-                var n = SquirrelNoise32Bit.Perlin(x * _noiseFrequency, z * _noiseFrequency, _seed);
+                var n = SquirrelNoise32Bit.Perlin(x * noiseFrequency, z * noiseFrequency, seed);
                 //var n = SquirrelNoise32Bit.Get2DNoise((int)(x * _noiseFrequency), (int)(z * _noiseFrequency), _seed);
 
                 #endregion
 
                 var surfaceY = (int)(yMin + math.round(n * heightRange));
                 // Clamp surface to be at least bottom-layer height (prevents tiny columns dipping below the bottom fill band)
-                surfaceY = math.clamp(surfaceY, _bottomLayerHeight, yMax);
+                surfaceY = math.clamp(surfaceY, bottomLayerHeight, yMax);
 
                 // --- Fill from MinHeight..(surfaceY-1) ---
                 for (var y = yMin; y < surfaceY; y++)
                 {
-                    var blockToSpawn = y < _bottomLayerHeight ? _bottomSubsurfaceBlock : _subsurfaceBlock;
+                    var blockToSpawn = y < bottomLayerHeight ? bottomSubsurfaceBlock : subsurfaceBlock;
                     SpawnBlock(blockToSpawn, new Vector3Int(x, y, z));
                 }
 
                 // --- Place surface block at surfaceY ---
-                SpawnBlock(_surfaceBlock, new Vector3Int(x, surfaceY, z));
+                SpawnBlock(surfaceBlock, new Vector3Int(x, surfaceY, z));
             }
         }
 
@@ -251,21 +215,13 @@ namespace UnityCraft
             instance.name = $"{block.Name}_{gridPos.x}_{gridPos.y}_{gridPos.z}";
             instance.transform.localPosition = gridPos;
         }
-
+        
         /// <summary>
         /// Validates core configuration to prevent out-of-range builds or null refs.
         /// </summary>
         private void ValidateConfig()
         {
-            // Ensure sensible sizes; Y is a span, must be >= 1
-            _buildSize.x = Mathf.Max(1, _buildSize.x);
-            _buildSize.y = Mathf.Max(1, _buildSize.y);
-            _buildSize.z = Mathf.Max(1, _buildSize.z);
-
-            // Keep the bottom layer within [MinHeight, MaxHeight]
-            var maxHeight = MaxHeight;
-            if (_bottomLayerHeight < _minHeight) _bottomLayerHeight = _minHeight + 1;
-            if (_bottomLayerHeight > maxHeight)  _bottomLayerHeight = maxHeight;
+            _worldData.ValidateConfig();
 
             if (!_blocksParent && transform.childCount > 0)
             {
