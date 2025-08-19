@@ -205,13 +205,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.23009327, y: -0.5515572, z: 0.16159174, w: -0.78532153}
-  m_LocalPosition: {x: -23.660995, y: 91.861465, z: 6.011552}
+  m_LocalRotation: {x: 0.24593168, y: 0.3495923, z: -0.095637605, w: 0.89897513}
+  m_LocalPosition: {x: -45.6, y: 39.1, z: -49}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 30.6, y: 42.5, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,7 +236,7 @@ MonoBehaviour:
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 1
-  m_Antialiasing: 0
+  m_Antialiasing: 3
   m_AntialiasingQuality: 2
   m_StopNaN: 0
   m_Dithering: 0
@@ -250,7 +250,7 @@ MonoBehaviour:
   m_RequiresColorTexture: 0
   m_TaaSettings:
     m_Quality: 3
-    m_FrameInfluence: 0.1
+    m_FrameInfluence: 0.100000024
     m_JitterScale: 1
     m_MipBias: 0
     m_VarianceClampScale: 0.9
@@ -492,20 +492,101 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4b08d913f394c92ac65a173947c328c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnityCraft.WorldPrefabGenerator
-  _seed: 12345
-  _buildSize: {x: 10, y: 10, z: 10}
-  _minHeight: -10
-  _bottomLayerHeight: -7
-  _noiseFrequency: 0.05
-  _surfaceBlock:
-    _name: DirtGrass
-    _prefab: {fileID: 1110004886314054, guid: d9cbbaee5d4395146862aae150786a31, type: 3}
-  _subsurfaceBlock:
-    _name: Dirt
-    _prefab: {fileID: 1018983067441114, guid: 8f1516f12ec66484ca62b9f41e10c35b, type: 3}
-  _bottomSubsurfaceBlock:
-    _name: Stone
-    _prefab: {fileID: 1185819803495236, guid: 1cb0968696d7537478b1f1f8b1970a45, type: 3}
+  _generateType: 0
+  _worldData:
+    _seed: 12345
+    _buildSize: {x: 100, y: 40, z: 100}
+    _minHeight: -1
+    _bottomLayerHeight: 0
+    _noiseFrequency: 0.05
+    _atlasConfig:
+      _rows: 3
+      _columns: 16
+    _blocks:
+    - _name: Air
+      _prefab: {fileID: 0}
+      _uvs:
+        front:
+          row: 2
+          col: 5
+        left:
+          row: 2
+          col: 5
+        back:
+          row: 2
+          col: 5
+        right:
+          row: 2
+          col: 5
+        top:
+          row: 2
+          col: 5
+        bottom:
+          row: 2
+          col: 5
+    - _name: Grass
+      _prefab: {fileID: 1110004886314054, guid: d9cbbaee5d4395146862aae150786a31, type: 3}
+      _uvs:
+        front:
+          row: 0
+          col: 0
+        left:
+          row: 0
+          col: 0
+        back:
+          row: 0
+          col: 0
+        right:
+          row: 0
+          col: 0
+        top:
+          row: 1
+          col: 0
+        bottom:
+          row: 0
+          col: 1
+    - _name: Dirt
+      _prefab: {fileID: 1018983067441114, guid: 8f1516f12ec66484ca62b9f41e10c35b, type: 3}
+      _uvs:
+        front:
+          row: 0
+          col: 2
+        left:
+          row: 0
+          col: 2
+        back:
+          row: 0
+          col: 2
+        right:
+          row: 0
+          col: 2
+        top:
+          row: 0
+          col: 2
+        bottom:
+          row: 0
+          col: 2
+    - _name: Stone
+      _prefab: {fileID: 1872449490695404, guid: c03155b82bad4794580f44555a3ff4ce, type: 3}
+      _uvs:
+        front:
+          row: 0
+          col: 2
+        left:
+          row: 0
+          col: 2
+        back:
+          row: 0
+          col: 2
+        right:
+          row: 0
+          col: 2
+        top:
+          row: 0
+          col: 2
+        bottom:
+          row: 0
+          col: 2
   _blocksParent: {fileID: 1539817325}
 --- !u!4 &1960958034
 Transform:
