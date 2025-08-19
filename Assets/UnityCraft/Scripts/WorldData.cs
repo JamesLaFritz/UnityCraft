@@ -22,7 +22,7 @@ namespace UnityCraft
         /// X represents half-width, Y represents the maximum height above Minimum Height,
         /// and Z represents half-length. Used when no specific build size is provided.
         /// </summary>
-        private static readonly Vector3Int _defaultBuildSize = new(32, 380, 32);
+        private static readonly Vector3Int DefaultBuildSize = new(140, 380, 140);
 
         #region Fields
 
@@ -65,6 +65,14 @@ namespace UnityCraft
         [Tooltip("Perlin noise frequency for heightmap. Larger values = more frequent variation.")]
         [Min(0.0001f)]
         [SerializeField] private float _noiseFrequency;
+
+        /// <summary>
+        /// Stores the configuration details for the texture atlas used in the procedural world generation.
+        /// Represents parameters like the number of rows and columns in the texture atlas, which are used
+        /// to determine UV mapping for block textures.
+        /// </summary>
+        [Tooltip("Stores the configuration details for the texture atlas used in the procedural world generation.")]
+        [SerializeField] private AtlasConfig _atlasConfig;
         
         /// <summary>
         /// Represents the collection of block data used to define the types of blocks available in the world.
@@ -132,12 +140,24 @@ namespace UnityCraft
         /// The index position of each element corresponds to its associated block type in the world generation.
         /// </summary>
         /// <remarks>
-        /// Blocks[0] represents air (empty space), Blocks[1] represents the fallback/default block,
-        /// Blocks[2] represents the surface block, Blocks[n] represents subsurface blocks,
+        /// Blocks[0] represents air (empty space),
+        /// Blocks[1] represents the surface block,
+        /// Blocks[n] represents subsurface blocks,
         /// and Blocks[Count-1] represents the bottom layer block.
         /// This collection determines the layers and composition of the world.
         /// </remarks>
         public BlockData[] Blocks => _blocks;
+
+        /// <summary>
+        /// Represents the configuration for a texture atlas.
+        /// Contains properties for defining the number of rows and columns in the atlas grid,
+        /// which are used to map textures to different blocks or objects in the world.
+        /// </summary>
+        /// <remarks>
+        /// The atlas configuration is essential for creating consistent and efficient texture mapping.
+        /// Proper definition of rows and columns ensures correct alignment and usage of texture data.
+        /// </remarks>
+        public AtlasConfig AtlasConfig => _atlasConfig;
 
         #endregion
 
@@ -147,12 +167,13 @@ namespace UnityCraft
         /// seed values for deterministic terrain, world dimensions, height variants,
         /// noise frequency, and block definitions.
         /// </summary>
-        public WorldData(BlockData[] blocks, uint seed = 0, Vector3Int buildSize = default,
+        public WorldData(BlockData[] blocks, AtlasConfig atlasConfig, uint seed = 0, Vector3Int buildSize = default,
             int minHeight = -64, int bottomLayerHeight = -62, float noiseFrequency = 1f)
         {
             _blocks = blocks;
+            _atlasConfig = atlasConfig;
             _seed = seed;
-            _buildSize = buildSize == default ? _defaultBuildSize : buildSize;
+            _buildSize = buildSize == default ? DefaultBuildSize : buildSize;
             _minHeight = minHeight;
             _bottomLayerHeight = bottomLayerHeight;
             _noiseFrequency = noiseFrequency;

@@ -2,7 +2,7 @@
 // BlockData.cs
 // Author: James LaFritz
 // Description: Serializable data container for a block type used by the world generator.
-//              Kept intentionally small for Milestone 1. We'll expand as needed in later milestones.
+//              optional prefab or optional per-face UV picks.
 #endregion
 
 using Unity.Burst;
@@ -13,6 +13,7 @@ namespace UnityCraft
     /// <summary>
     /// Serializable data for a block type used by the world generator.
     /// For Milestone 1, a block is defined by a friendly <see cref="Name"/> and its <see cref="Prefab"/>.
+    /// For Mile Stone 2 we need to add per-face UV picks for the block.
     /// Future milestones may extend this with materials, health, sounds, mining level, etc.
     /// </summary>
     [System.Serializable]
@@ -29,7 +30,11 @@ namespace UnityCraft
         /// <summary>
         /// Prefab GameObject representing this block (typically a 1×1×1 cube with a material applied).
         /// </summary>
+        [Tooltip("Optional prefab GameObject representing this block (typically a 1×1×1 cube with a material applied). Need if instancing prefab in game (Milestone 1).")]
         [SerializeField] private GameObject _prefab;
+        
+        [Tooltip("Optional per-face atlas selections for this block (front/left/back/right/top/bottom). Need if generating mesh in game (Milestone 2).")]
+        [SerializeField] private BlockUVs _uvs;
 
         #endregion
 
@@ -45,6 +50,13 @@ namespace UnityCraft
         /// </summary>
         public GameObject Prefab => _prefab;
 
+        /// <summary>
+        /// Retrieves the texture atlas coordinates for the block,
+        /// allowing optional per-face UV mapping (front, left, back, right, top, bottom).
+        /// This data is crucial for generating detailed block meshes in-game.
+        /// </summary>
+        public BlockUVs UVs => _uvs;
+
         #endregion
 
         #region Constructor
@@ -54,10 +66,12 @@ namespace UnityCraft
         /// </summary>
         /// <param name="name">Display name of the block.</param>
         /// <param name="prefab">Prefab GameObject for this block.</param>
-        public BlockData(string name, GameObject prefab)
+        /// <param name="uvs">Per-face atlas selections for this block</param>
+        public BlockData(string name, GameObject prefab, BlockUVs uvs)
         {
             _name = name;
             _prefab = prefab;
+            _uvs = uvs;
         }
 
         #endregion

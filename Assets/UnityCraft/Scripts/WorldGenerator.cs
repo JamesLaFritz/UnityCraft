@@ -4,6 +4,7 @@
 // Description: Baseline prototype world using instantiated block prefabs placed via a heightmap.
 #endregion
 
+using System;
 using CoreFramework.Random;
 using Unity.Mathematics;
 using UnityEngine;
@@ -14,9 +15,30 @@ namespace UnityCraft
     /// Generates a small voxel terrain by instantiating a block prefab at each grid column
     /// up to a height computed from Perlin noise. This is the slow, baseline approach.
     /// </summary>
-    public class WorldPrefabGenerator : MonoBehaviour
+    public class WorldGenerator : MonoBehaviour
     {
+        /// <summary>
+        /// Specifies the type of terrain generation approach for the world.
+        /// </summary>
+        private enum GenerateType
+        {
+            Prefab,
+            Mesh,
+        }
+        
         #region Fields
+
+        /// <summary>
+        /// Defines the selected method for terrain generation within the world creation system.
+        /// This variable determines whether terrain is generated using a prefab-based approach
+        /// or through mesh-based generation, influencing performance and visual fidelity.
+        /// </summary>
+        /// <remarks>
+        /// This field is serialized to allow for configuration in the Unity Inspector and directly
+        /// affects how the terrain is constructed. Changes in this setting will impact the
+        /// rendering process and may require regenerating the world to observe effects.
+        /// </remarks>
+        [SerializeField] private GenerateType _generateType = GenerateType.Prefab;
 
         /// <summary>
         /// Represents the configuration data used by the world generation system in UnityCraft.
@@ -110,11 +132,6 @@ namespace UnityCraft
             var surfaceBlock = _worldData.Blocks[1];
             var subsurfaceBlock = blockCount < 3 ? _worldData.Blocks[^1] : _worldData.Blocks[2];
             var bottomSubsurfaceBlock = _worldData.Blocks[^1];
-            if (!surfaceBlock.Prefab || !subsurfaceBlock.Prefab || !bottomSubsurfaceBlock.Prefab)
-            {
-                Debug.LogWarning("[World] Missing block prefabs. Assign Surface/Subsurface/BottomSubsurface in the inspector.");
-                return;
-            }
 
             ClearWorld();
             
@@ -158,11 +175,11 @@ namespace UnityCraft
                 for (var y = yMin; y < surfaceY; y++)
                 {
                     var blockToSpawn = y < bottomLayerHeight ? bottomSubsurfaceBlock : subsurfaceBlock;
-                    SpawnBlock(blockToSpawn, new Vector3Int(x, y, z));
+                    CreateBlock(blockToSpawn, new Vector3Int(x, y, z));
                 }
 
                 // --- Place surface block at surfaceY ---
-                SpawnBlock(surfaceBlock, new Vector3Int(x, surfaceY, z));
+                CreateBlock(surfaceBlock, new Vector3Int(x, surfaceY, z));
             }
         }
 
@@ -192,6 +209,33 @@ namespace UnityCraft
             {
                 Destroy(_blocksParent.GetChild(i).gameObject);
             }
+        }
+
+        /// <summary>
+        /// Creates a block at a specific grid position based on the current generation type.
+        /// </summary>
+        /// <param name="block">The data defining the block's properties, such as name, prefab, and textures.</param>
+        /// <param name="gridPos">The grid position where the block will be generated.</param>
+        private void CreateBlock(in BlockData block, in Vector3Int gridPos)
+        {
+            switch (_generateType)
+            {
+                case GenerateType.Prefab:
+                    SpawnBlock(block, gridPos);
+                    break;
+                case GenerateType.Mesh:
+                    CreateMesh(block, gridPos);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Creates a mesh for the given block data at a specified grid position.
+        /// </summary>
+        /// <param name="block">The block data containing information to define the block's properties.</param>
+        /// <param name="gridPos">The grid position where the mesh will be created.</param>
+        private void CreateMesh(in BlockData block, in Vector3Int gridPos)
+        {
         }
 
         /// <summary>
